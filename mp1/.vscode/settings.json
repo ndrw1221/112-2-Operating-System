@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "threads.h": "c",
+        "user.h": "c"
+    }
+}

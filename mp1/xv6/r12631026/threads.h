@@ -15,6 +15,15 @@ struct thread {
     int ID;
     struct thread *previous;
     struct thread *next;
+    struct task *top;
+};
+
+struct task { // task stack implemented as linked list
+    void (*fp)(void *arg);
+    void *arg;
+    jmp_buf env;
+    int buf_set;
+    struct task *next;
 };
 
 struct thread *thread_create(void (*f)(void *), void *arg);
@@ -27,4 +36,5 @@ void thread_start_threading(void);
 
 // part 2
 void thread_assign_task(struct thread *t, void (*f)(void *), void *arg);
+void thread_pop_task(void);
 #endif // THREADS_H_

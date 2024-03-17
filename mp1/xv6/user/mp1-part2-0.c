@@ -36,7 +36,7 @@ void f1(void *arg)
         printf("thread 1: %d\n",i++);
         if (i == 106) {
             thread_exit();
-        }else if (i & 1){ // (i & 1) == 1 if i is odd and (i & 1) == 0 if i is even
+        }else if (i & 1){ // if i is odd
             thread_assign_task(t2, task2, &i);
         }
         thread_yield();
