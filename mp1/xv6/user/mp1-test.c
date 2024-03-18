@@ -23,7 +23,7 @@ void t1(void* arg){
 
 void t2(void* arg){
     
-    for(int i = 0; i < TASK_COUNT; ++i){
+    for(int i = 1; i <= TASK_COUNT; ++i){
         thread_assign_task(thread1, task1, &i);
         thread_yield();
     }

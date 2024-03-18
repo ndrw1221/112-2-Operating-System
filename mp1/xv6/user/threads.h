@@ -42,6 +42,6 @@ void thread_start_threading(void);
 
 // part 2
 void thread_assign_task(struct thread *t, void (*f)(void *), void *arg);
-void task_schedule(void);
+void task_schedule(struct thread *t);
 void thread_pop_task(void);
 #endif // THREADS_H_

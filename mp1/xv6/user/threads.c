@@ -22,10 +22,12 @@ struct thread *thread_create(void (*f)(void *), void *arg){
     t->buf_set = 0;
     t->stack = (void*) new_stack;
     t->stack_p = (void*) new_stack_p;
+    id++;
+    
+    t->top = NULL;
     t->current_task = NULL;
     t->task_count = 0;
     t->first_self_assign = 0;
-    id++;
     return t;
 }
 void thread_add_runqueue(struct thread *t){
@@ -70,7 +72,8 @@ void thread_yield(void){
     }
 
     if(!setjmp(*env)){ // save the current context
-        task_schedule();
+        task_schedule(current_thread);
+        task_schedule(current_thread->next);
         schedule();
         dispatch();
     }
@@ -127,6 +130,7 @@ void thread_exit(void){
         current_thread->previous->next = current_thread->next;
         current_thread->next->previous = current_thread->previous;
 
+        task_schedule(temp->next);            
         schedule();
         free(temp->stack);
         free(temp);
@@ -181,17 +185,23 @@ void thread_assign_task(struct thread *t, void (*f)(void *), void *arg){
     }
 
     if(verbose) printf("[INFO] task %d assigned to thread %d\n", new_task->ID, t->ID);
+    if(verbose == 2) printf("[INFO] THREAD: %d, CURRENT: %d, TOP: %d\n\n", t->ID, t->current_task->ID, t->top->ID);
+
+
 }
 
-void task_schedule(void) {
-    current_thread->current_task = current_thread->top;
+void task_schedule(struct thread *t) {
+    if(verbose == 2) printf("\n[INFO] THREAD: %d, CURRENT: %d, TOP: %d\n", current_thread->ID, current_thread->current_task->ID, current_thread->top->ID);
+    t->current_task = t->top;
+    if(verbose == 2) printf("[INFO] current task matched top task\n");
+    if(verbose == 2) printf("[INFO] THREAD: %d, CURRENT: %d, TOP: %d\n\n", current_thread->ID, current_thread->current_task->ID, current_thread->top->ID);
 }
 
 void thread_pop_task(void){
+    if(verbose) printf("[INFO] task %d popped from thread %d\n", current_thread->current_task->ID, current_thread->ID);
     struct task *temp = current_thread->current_task;
     current_thread->top = current_thread->top->next;
-    task_schedule();
-    if(verbose) printf("[INFO] task %d popped from thread %d\n", temp->ID, current_thread->ID);
+    task_schedule(current_thread);
     free(temp->stack);
     free(temp);
     dispatch();

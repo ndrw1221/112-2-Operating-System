@@ -1,36 +1,35 @@
 == Test thread package with public testcase mp1-part1-0 (5%) ==
-thread package with public testcase mp1-part1-0: OK (23.0s)
+thread package with public testcase mp1-part1-0: OK (20.1s)
 == Test thread package with public testcase mp1-part1-1 (5%) ==
-thread package with public testcase mp1-part1-1: OK (2.2s)
+thread package with public testcase mp1-part1-1: OK (2.3s)
 == Test thread package with public testcase mp1-part2-0 (5%) ==
-thread package with public testcase mp1-part2-0: OK (2.3s)
+thread package with public testcase mp1-part2-0: OK (3.2s)
 == Test thread package with public testcase mp1-part2-1 (5%) ==
-Timeout! thread package with public testcase mp1-part2-1: FAIL (30.9s)
-    [Error] Output on line 26: 'task 3: 10', should be 'thread 3: 10000'
+thread package with public testcase mp1-part2-1: OK (2.6s)
 == Test thread package with public testcase mp1-part2-2 (5%) ==
-thread package with public testcase mp1-part2-2: OK (2.4s)
+thread package with public testcase mp1-part2-2: OK (2.3s)
 == Test thread package with public testcase custom-1 (5%) ==
-thread package with public testcase custom-1: FAIL (2.4s)
-    [Error] Output on line 1: 'usertrap(): unexpected scause 0x0000000000000002 pid=3', should be 'f1: 10000, 101'
+Timeout! thread package with public testcase custom-1: FAIL (31.0s)
+    [Error] Output on line 41: 'qemu-system-riscv64: terminating on signal 15 from pid 8581 (make)', should be 'f1: 410000, 101'
 == Test thread package with public testcase custom-2 (5%) ==
 thread package with public testcase custom-2: OK (2.3s)
 == Test thread package with public testcase custom-3 (5%) ==
-thread package with public testcase custom-3: OK (2.6s)
+thread package with public testcase custom-3: OK (2.3s)
 == Test thread package with public testcase custom-4 (5%) ==
 thread package with public testcase custom-4: FAIL (2.4s)
     [Error] Output on line 61: 'usertrap(): unexpected scause 0x0000000000000002 pid=3', should be 'thread 1: 1'
 == Test thread package with public testcase custom-5 (5%) ==
-thread package with public testcase custom-5: OK (6.6s)
+thread package with public testcase custom-5: OK (6.5s)
 == Test thread package with public testcase custom-6 (5%) ==
 thread package with public testcase custom-6: OK (7.8s)
 == Test thread package with public testcase custom-7 (5%) ==
-thread package with public testcase custom-7: OK (7.8s)
+thread package with public testcase custom-7: OK (9.1s)
 == Test thread package with public testcase custom-8 (5%) ==
-thread package with public testcase custom-8: OK (2.6s)
+thread package with public testcase custom-8: OK (2.5s)
 == Test thread package with public testcase custom-9 (5%) ==
 Timeout! thread package with public testcase custom-9: FAIL (30.8s)
-    [Error] Output on line 1: 'qemu-system-riscv64: terminating on signal 15 from pid 2162 (make)', should be 'fib 14285 100000 5'
+    [Error] Output on line 1: 'qemu-system-riscv64: terminating on signal 15 from pid 8814 (make)', should be 'fib 14285 100000 5'
 == Test thread package with public testcase custom-10 (5%) ==
-thread package with public testcase custom-10: FAIL (4.0s)
+thread package with public testcase custom-10: FAIL (4.7s)
     [Error] Output on line 4: 'fib 0 4 723', should be 'fib 0 4 724'
-Score: 50/75
+Score: 55/75
