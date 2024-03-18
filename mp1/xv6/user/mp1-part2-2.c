@@ -17,6 +17,8 @@ void f1(void *arg)
     }
 
     thread_yield();
+    // printf("%s 1 ended\n", (cnt == 0)? "thread" : "task", cnt);
+    // cnt--;
 }
 
 int main(int argc, char **argv)
