@@ -544,8 +544,47 @@ void pgprint() {
 /* Print multi layer page table. */
 void vmprint(pagetable_t pagetable) {
   /* TODO */
+  int count = 0;
+  for (int i = 0; i < 512; i++) {
+    if (pagetable[i] & PTE_V) count++;
+  }
+  
   printf("page table %p\n", pagetable);
-  printf("+-- %p\n", pagetable[0]);
+  for (unsigned long long i = 0; i < 512; i++) {
+    // level 2 page table
+    if (pagetable[i] & PTE_V) {
+      count--;
+      pagetable_t PA1 = (pagetable_t) PTE2PA(pagetable[i]);
+      pagetable_t VA1 = (pagetable_t) (i << 30);
+      printf("+-- %d: pte=%p va=%p pa=%p V\n", i, pagetable+i, VA1, PA1);
 
-  // panic("not implemented yet\n");
+      for (unsigned long long j = 0; j < 512; j++) {
+        // level 1 page table
+        if (PA1[j] & PTE_V) {
+          pagetable_t PA2 = (pagetable_t) PTE2PA(PA1[j]);
+          pagetable_t VA2 = (pagetable_t) (i << 30 | j << 21);
+          if (count) printf("|");
+          else printf(" ");
+          printf("   +-- %d: pte=%p va=%p pa=%p V\n", j, PA1+j, VA2, PA2);
+
+          for (unsigned long long k = 0; k < 512; k++) {
+            // level 0 page table
+            if (PA2[k] & PTE_V) {
+              pagetable_t PA3 = (pagetable_t) PTE2PA(PA2[k]);
+              pagetable_t VA3 = (pagetable_t) (i << 30 | j << 21 | k << 12);
+              if (count) printf("|");
+              else printf(" ");
+              printf("       +-- %d: pte=%p va=%p pa=%p V", k, PA2+k, VA3, PA3);
+              if(PA2[k] & PTE_R) printf(" R");
+              if(PA2[k] & PTE_W) printf(" W");
+              if(PA2[k] & PTE_X) printf(" X");
+              if(PA2[k] & PTE_U) printf(" U");
+              if(PA2[k] & PTE_D) printf(" D");
+              printf("\n");
+            }
+          }
+        }
+      }
+    }
+  }
 }
