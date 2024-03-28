@@ -495,7 +495,6 @@ int madvise(uint64 base, uint64 len, int advice) {
     pte_t *pte;
     for (uint64 va = begin; va <= last; va += PGSIZE) {
       pte = walk(pgtbl, va, 0);
-      // printf("dontneed: %p\n",pte);
       if (pte != 0 && (*pte & PTE_V)) {
         char *pa = (char*) swap_page_from_pte(pte);
         if (pa == 0) {
@@ -519,8 +518,30 @@ int madvise(uint64 base, uint64 len, int advice) {
     return 0;
   } else if(advice == MADV_PIN) {
     // TODO
+    begin_op();
+
+    pte_t *pte;
+    for (uint64 va = begin; va <= last; va += PGSIZE) {
+      pte = walk(pgtbl, va, 0);
+      if (pte != 0 && (*pte & PTE_V)) {
+        *pte |= PTE_P;
+        end_op();
+        return 0;
+      }
+    }
   } else if(advice == MADV_UNPIN) {
     // TODO
+    begin_op();
+
+    pte_t *pte;
+    for (uint64 va = begin; va <= last; va += PGSIZE) {
+      pte = walk(pgtbl, va, 0);
+      if (pte != 0 && (*pte & PTE_V)) {
+        *pte &= ~PTE_P;
+        end_op();
+        return 0;
+      }
+    }
   }
   else {
     return -1;
@@ -544,43 +565,79 @@ void pgprint() {
 /* Print multi layer page table. */
 void vmprint(pagetable_t pagetable) {
   /* TODO */
-  int count = 0;
+  // Number of valid level 2 PTEs
+  int l2_count = 0;
   for (int i = 0; i < 512; i++) {
-    if (pagetable[i] & PTE_V) count++;
+    if (pagetable[i] & PTE_V) {
+      l2_count++;
+    }
   }
   
+  // Number of valid level 1 PTEs under each level 2 PTE
+  int l1_count[l2_count];
+  memset(l1_count, 0, sizeof(l1_count));
+  int l2_count_temp = l2_count;
+  for (int i = 0; i < 512; i++) {
+    if (pagetable[i] & PTE_V) {
+      l2_count_temp--;
+      pagetable_t PA1 = (pagetable_t) PTE2PA(pagetable[i]);
+      for (int j = 0; j < 512; j++) {
+        if (PA1[j] & PTE_V) {
+          l1_count[l2_count_temp]++;
+        }
+      }
+    }
+  }
+
   printf("page table %p\n", pagetable);
   for (unsigned long long i = 0; i < 512; i++) {
     // level 2 page table
     if (pagetable[i] & PTE_V) {
-      count--;
+      l2_count--;
       pagetable_t PA1 = (pagetable_t) PTE2PA(pagetable[i]);
-      pagetable_t VA1 = (pagetable_t) (i << 30);
+      uint64 VA1 = (uint64) (i << 30);
       printf("+-- %d: pte=%p va=%p pa=%p V\n", i, pagetable+i, VA1, PA1);
 
       for (unsigned long long j = 0; j < 512; j++) {
         // level 1 page table
         if (PA1[j] & PTE_V) {
+          l1_count[l2_count]--;
           pagetable_t PA2 = (pagetable_t) PTE2PA(PA1[j]);
-          pagetable_t VA2 = (pagetable_t) (i << 30 | j << 21);
-          if (count) printf("|");
-          else printf(" ");
-          printf("   +-- %d: pte=%p va=%p pa=%p V\n", j, PA1+j, VA2, PA2);
+          uint64 VA2 = (uint64) (i << 30 | j << 21);
+          if (l2_count) printf("|   ");
+          else printf("    ");
+          printf("+-- %d: pte=%p va=%p pa=%p V\n", j, PA1+j, VA2, PA2);
 
           for (unsigned long long k = 0; k < 512; k++) {
             // level 0 page table
             if (PA2[k] & PTE_V) {
-              pagetable_t PA3 = (pagetable_t) PTE2PA(PA2[k]);
-              pagetable_t VA3 = (pagetable_t) (i << 30 | j << 21 | k << 12);
-              if (count) printf("|");
-              else printf(" ");
-              printf("       +-- %d: pte=%p va=%p pa=%p V", k, PA2+k, VA3, PA3);
+              uint64 PA3 = PTE2PA(PA2[k]);
+              uint64 VA3 = (i << 30 | j << 21 | k << 12);
+              if (l2_count) printf("|   ");
+              else printf("    ");
+              if (l1_count[l2_count]) printf("|   ");
+              else printf("    ");
+              printf("+-- %d: pte=%p va=%p pa=%p V", k, PA2+k, VA3, PA3);
               if(PA2[k] & PTE_R) printf(" R");
               if(PA2[k] & PTE_W) printf(" W");
               if(PA2[k] & PTE_X) printf(" X");
               if(PA2[k] & PTE_U) printf(" U");
               if(PA2[k] & PTE_D) printf(" D");
               printf("\n");
+            } else if (PA2[k] & PTE_S) {
+              uint64 blockno = PTE2BLOCKNO(PA2[k]);
+              uint64 VA3 = (i << 30 | j << 21 | k << 12);
+              if (l2_count) printf("|   ");
+              else printf("    ");
+              if (l1_count[l2_count]) printf("|   ");
+              else printf("    ");
+              printf("+-- %d: pte=%p va=%p blockno=%p", k, PA2+k, VA3, blockno);
+              if(PA2[k] & PTE_R) printf(" R");
+              if(PA2[k] & PTE_W) printf(" W");
+              if(PA2[k] & PTE_X) printf(" X");
+              if(PA2[k] & PTE_U) printf(" U");
+              if(PA2[k] & PTE_D) printf(" D");
+              printf(" S\n");
             }
           }
         }
