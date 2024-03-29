@@ -70,8 +70,8 @@ usertrap(void)
 
     syscall();
   }else if (scause == 13 || scause == 15) {
-    //page fault
-    handle_pgfault();
+    // page fault
+    handle_pgfault(r_stval());
   }else if ((which_dev = devintr()) != 0) {
     // ok
   } else {
@@ -152,8 +152,7 @@ kerneltrap()
     printf("scause %p\n", scause);
     printf("sepc=%p stval=%p\n", r_sepc(), r_stval());
     panic("kerneltrap");
-  }
-
+  } 
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     yield();

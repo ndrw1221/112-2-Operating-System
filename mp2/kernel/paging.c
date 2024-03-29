@@ -23,20 +23,18 @@ char *swap_page_from_pte(pte_t *pte) {
 
 /* NTU OS 2024 */
 /* Page fault handler */
-int handle_pgfault() {
-  /* Find the address that caused the fault */
-  uint64 va = r_stval();
+int handle_pgfault(uint64 va) {
   /* TODO */
-  pagetable_t pagetable = myproc()->pagetable;
+  pagetable_t pgtbl = myproc()->pagetable;
   char *mem = kalloc();
   if(mem == 0) {
     panic("out of memory");
   }
-  int result = mappages(pagetable, va, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U);
+  int result = mappages(pgtbl, va, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U);
+
   if (result < 0) {
     kfree(mem);
     panic("mappages failed");
   }
   return 0;
-  // panic("not implemented yet\n");
 }

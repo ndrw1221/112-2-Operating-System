@@ -7,8 +7,8 @@ riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/main.o kernel/main.c
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/vm.o kernel/vm.c
 kernel/vm.c: In function ‘madvise’:
-kernel/vm.c:549:1: warning: control reaches end of non-void function [-Wreturn-type]
-  549 | }
+kernel/vm.c:580:1: warning: control reaches end of non-void function [-Wreturn-type]
+  580 | }
       | ^
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/proc.o kernel/proc.c
 riscv64-linux-gnu-gcc    -c -o kernel/swtch.o kernel/swtch.S
@@ -45,11 +45,17 @@ make[1]: Leaving directory '/root'
 == Test mp2_1 (6%) ==
 fatal: not a git repository (or any parent up to mount point /)
 Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
-mp2_1: OK (10.9s) 
+mp2_1: OK (14.8s) 
 == Test mp2_2 (12%) ==
-mp2_2: OK (1.9s) 
+mp2_2: OK (2.6s) 
 == Test mp2_3 (12%) ==
-mp2_3: FAIL (2.1s) 
-    Line 117 do not match.
-    QEMU output saved to mp2_3.out.mp2_3
+mp2_3: OK (2.7s) 
 == Test mp2_4 (12%) ==
+Timeout! mp2_4: FAIL (318.9s) 
+    Line 199 do not match.
+    QEMU output saved to mp2_4.out.mp2_4
+== Test mp2_5 (18%) ==
+Timeout! mp2_5: FAIL (320.2s) 
+    Line 199 do not match.
+    QEMU output saved to mp2_5.out.mp2_5
+Score: 30/60

@@ -487,14 +487,45 @@ int madvise(uint64 base, uint64 len, int advice) {
 
   if (advice == MADV_NORMAL) {
     // TODO
+    return 0;
   } else if (advice == MADV_WILLNEED) {
     // TODO
+    begin_op();
+
+    pte_t *pte;
+    for (uint64 va = begin; va <= last; va += PGSIZE) {
+      pte = walk(pgtbl, va, 0);
+      if (pte != 0 && (*pte & PTE_S)) {
+        uint dp = PTE2BLOCKNO(*pte);
+        handle_pgfault(va);
+        // printf("1\n");
+        // printf("2\n");
+        char *pa = (char*) PTE2PA(*pte);
+        // printf("3\n");
+        // printf("pte=%p va=%p blockno=%p pa=%p\n", pte, va, dp, pa);
+        read_page_from_disk(ROOTDEV, pa, dp);
+        // printf("4\n");
+        *pte = (PA2PTE(pa) | PTE_FLAGS(*pte) | PTE_V) & ~PTE_S;
+        // printf("5\n");
+        if (dp == 0) {
+          end_op();
+          return -1;
+        }
+        bfree_page(ROOTDEV, dp);
+      }
+    }
+
+    end_op();
+    return 0;
   } else if (advice == MADV_DONTNEED) {
     begin_op();
 
     pte_t *pte;
     for (uint64 va = begin; va <= last; va += PGSIZE) {
       pte = walk(pgtbl, va, 0);
+      if (pte != 0 && (*pte & PTE_P)) {
+        panic("swapping pinned page");
+      }
       if (pte != 0 && (*pte & PTE_V)) {
         char *pa = (char*) swap_page_from_pte(pte);
         if (pa == 0) {
@@ -623,6 +654,7 @@ void vmprint(pagetable_t pagetable) {
               if(PA2[k] & PTE_X) printf(" X");
               if(PA2[k] & PTE_U) printf(" U");
               if(PA2[k] & PTE_D) printf(" D");
+              if(PA2[k] & PTE_P) printf(" P");
               printf("\n");
             } else if (PA2[k] & PTE_S) {
               uint64 blockno = PTE2BLOCKNO(PA2[k]);
