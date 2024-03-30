@@ -9,29 +9,58 @@
 #include "proc.h"
 
 void q_init(queue_t *q){
-	panic("Not implemented yet\n");
+	q->size = 0;
+	for (int i = 0; i < PG_BUF_SIZE; i++) {
+		q->bucket[i] = 0;
+	}
 }
 
+// 0: success, -1: fail, 1: already exist
 int q_push(queue_t *q, uint64 e){
-	panic("Not implemented yet\n");
+	if (q_find(q, e) != -1) {
+		return 1;
+	}
+	if (q_full(q)) {
+		return -1;
+	}
+	q->bucket[q->size] = e;
+	q->size++;
+	return 0;
 }
 
 uint64 q_pop_idx(queue_t *q, int idx){
-	panic("Not implemented yet\n");
+	if (idx >= q->size) {
+		return -1;
+	}
+	uint64 ret = q->bucket[idx];
+	for (int i = idx; i < q->size - 1; i++) {
+		q->bucket[i] = q->bucket[i + 1];
+	}
+	q->size--;
+	return ret;
 }
 
 int q_empty(queue_t *q){
-	panic("Not implemented yet\n");
+	return q->size == 0;
 }
 
 int q_full(queue_t *q){
-	panic("Not implemented yet\n");
+	return q->size == PG_BUF_SIZE;
 }
 
 int q_clear(queue_t *q){
-	panic("Not implemented yet\n");
+	for (int i = 0; i < q->size; i++) {
+		q->bucket[i] = 0;
+	}
+	q->size = 0;
+	return 0;
 }
 
 int q_find(queue_t *q, uint64 e){
-	panic("Not implemented yet\n");
+	for (int i = 0; i < q->size; i++) {
+		if (q->bucket[i] == e) {
+			return i;
+		}
+	}
+	return -1;
 }

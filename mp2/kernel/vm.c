@@ -16,8 +16,12 @@
 // or other files
 #ifdef PG_REPLACEMENT_USE_LRU
 // TODO
+lru_t pg_replacement_buf;
+// lru_init(&pg_replacement_buf);
 #elif defined(PG_REPLACEMENT_USE_FIFO)
 // TODO
+queue_t pg_replacement_buf;
+// q_init(&pg_replacement_buf);
 #endif
 
 /*
@@ -111,14 +115,32 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
 
   pte_t *pte = &pagetable[PX(0, va)];
 
-// NTU OS 2024
-// pte is accessed, so determine how
-// it affects the page replacement buffer here
-#ifdef PG_REPLACEMENT_USE_LRU
-// TODO
-#elif defined(PG_REPLACEMENT_USE_FIFO)
-// TODO
-#endif
+  // NTU OS 2024
+  // pte is accessed, so determine how
+  // it affects the page replacement buffer here
+  #ifdef PG_REPLACEMENT_USE_LRU
+  // TODO
+  #elif defined(PG_REPLACEMENT_USE_FIFO)
+  // TODO
+  if (alloc) {
+    if (q_find(&pg_replacement_buf, (uint64) pte) == -1) {
+      if (!q_full(&pg_replacement_buf)) {
+        q_push(&pg_replacement_buf, (uint64) pte);
+      } else {
+        for (int i = 0; i < PG_BUF_SIZE; i++) {
+          // first pte that is not pinned
+          if (!(*(pte_t*) pg_replacement_buf.bucket[i] & PTE_P)) {
+            q_pop_idx(&pg_replacement_buf, i);
+            q_push(&pg_replacement_buf, (uint64) pte);
+            break;
+          }
+        }
+        // q_pop_idx(&pg_replacement_buf, 0);
+        // q_push(&pg_replacement_buf, (uint64) pte);
+      }
+    }
+  }
+  #endif
   return pte;
 }
 
@@ -498,15 +520,10 @@ int madvise(uint64 base, uint64 len, int advice) {
       if (pte != 0 && (*pte & PTE_S)) {
         uint dp = PTE2BLOCKNO(*pte);
         handle_pgfault(va);
-        // printf("1\n");
-        // printf("2\n");
         char *pa = (char*) PTE2PA(*pte);
-        // printf("3\n");
         // printf("pte=%p va=%p blockno=%p pa=%p\n", pte, va, dp, pa);
         read_page_from_disk(ROOTDEV, pa, dp);
-        // printf("4\n");
         *pte = (PA2PTE(pa) | PTE_FLAGS(*pte) | PTE_V) & ~PTE_S;
-        // printf("5\n");
         if (dp == 0) {
           end_op();
           return -1;
@@ -534,14 +551,19 @@ int madvise(uint64 base, uint64 len, int advice) {
         }
         kfree(pa);
 
-     // NTU OS 2024
-    // Swapped out page should not appear in
-    // page replacement buffer
-    #ifdef PG_REPLACEMENT_USE_LRU
-    // TODO
-    #elif defined(PG_REPLACEMENT_USE_FIFO)
-    // TODO
-    #endif
+        // NTU OS 2024
+        // Swapped out page should not appear in
+        // page replacement buffer
+        #ifdef PG_REPLACEMENT_USE_LRU
+        // TODO
+        #elif defined(PG_REPLACEMENT_USE_FIFO)
+        // TODO
+        if (pte != 0 && !(*pte & PTE_P)) {
+          int idx = q_find(&pg_replacement_buf, (uint64) pte);
+          if (idx != -1)
+            q_pop_idx(&pg_replacement_buf, idx);
+        }
+        #endif
       }
     }
 
@@ -583,12 +605,20 @@ int madvise(uint64 base, uint64 len, int advice) {
 /* print pages from page replacement buffers */
 #if defined(PG_REPLACEMENT_USE_LRU) || defined(PG_REPLACEMENT_USE_FIFO)
 void pgprint() {
+  printf("Page replacement buffers\n");
+  printf("------Start------------\n");
   #ifdef PG_REPLACEMENT_USE_LRU
   // TODO
+  for (int i = 0; i < pg_replacement_buf.size; i++) {
+    printf("pte: %p\n", pg_replacement_buf.bucket[i]);
+  }
   #elif defined(PG_REPLACEMENT_USE_FIFO)
   // TODO
+  for (int i = 0; i < pg_replacement_buf.size; i++) {
+    printf("pte: %p\n", pg_replacement_buf.bucket[i]);
+  }
   #endif
-  panic("not implemented yet\n");
+  printf("------End--------------\n");
 }
 #endif
 
@@ -668,7 +698,7 @@ void vmprint(pagetable_t pagetable) {
               if(PA2[k] & PTE_W) printf(" W");
               if(PA2[k] & PTE_X) printf(" X");
               if(PA2[k] & PTE_U) printf(" U");
-              if(PA2[k] & PTE_D) printf(" D");
+              // if(PA2[k] & PTE_D) printf(" D");
               printf(" S\n");
             }
           }
