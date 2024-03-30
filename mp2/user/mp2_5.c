@@ -16,6 +16,7 @@
 int main(int argc, char *argv[]) {
   vmprint();
   char *ptr = malloc(NR_PG * PG_SIZE);
+  // printf("After malloc. ptr=%p\n", ptr);
 
   madvise((uint64) ptr + 9*PG_SIZE, PG_SIZE - 1,  MADV_PIN); // pin the tenth pte
   printf("After madvise(MADV_PIN)\n");
@@ -27,6 +28,7 @@ int main(int argc, char *argv[]) {
 
   char *qtr = ptr + 5*PG_SIZE;
   *qtr = 'a'; // page fault and swap in, should skip tenth pte
+  // printf("After page fault and swap in. qtr=%p\n", qtr);
   printf("Page fault and swap in\n");
   vmprint();
 

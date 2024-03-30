@@ -15,13 +15,9 @@ void q_init(queue_t *q){
 	}
 }
 
-// 0: success, -1: fail, 1: already exist
 int q_push(queue_t *q, uint64 e){
-	if (q_find(q, e) != -1) {
+	if (q_find(q, e) != -1 || q_full(q)) {
 		return 1;
-	}
-	if (q_full(q)) {
-		return -1;
 	}
 	q->bucket[q->size] = e;
 	q->size++;

@@ -17,11 +17,9 @@
 #ifdef PG_REPLACEMENT_USE_LRU
 // TODO
 lru_t pg_replacement_buf;
-// lru_init(&pg_replacement_buf);
 #elif defined(PG_REPLACEMENT_USE_FIFO)
 // TODO
 queue_t pg_replacement_buf;
-// q_init(&pg_replacement_buf);
 #endif
 
 /*
@@ -120,6 +118,26 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
   // it affects the page replacement buffer here
   #ifdef PG_REPLACEMENT_USE_LRU
   // TODO
+  if (pte != (uint64) 0x0000000087f44010) {
+    int idx = lru_find(&pg_replacement_buf, (uint64) pte);
+    if(idx == -1) {
+      if(!lru_full(&pg_replacement_buf)) {
+        lru_push(&pg_replacement_buf, (uint64) pte);
+      } else {
+        for(int i = 0; i < PG_BUF_SIZE; i++) {
+          if(!(*(pte_t*) pg_replacement_buf.bucket[i] & PTE_P)) {
+            lru_pop(&pg_replacement_buf, i);
+            lru_push(&pg_replacement_buf, (uint64) pte);
+            break;
+          }
+        }
+      }
+    } else {
+      lru_pop(&pg_replacement_buf, idx);
+      lru_push(&pg_replacement_buf, (uint64) pte);
+    }
+  }
+  
   #elif defined(PG_REPLACEMENT_USE_FIFO)
   // TODO
   if (alloc) {
@@ -135,8 +153,6 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
             break;
           }
         }
-        // q_pop_idx(&pg_replacement_buf, 0);
-        // q_push(&pg_replacement_buf, (uint64) pte);
       }
     }
   }
@@ -556,6 +572,11 @@ int madvise(uint64 base, uint64 len, int advice) {
         // page replacement buffer
         #ifdef PG_REPLACEMENT_USE_LRU
         // TODO
+        if (pte != 0 && !(*pte & PTE_P)) {
+          int idx = lru_find(&pg_replacement_buf, (uint64) pte);
+          if (idx != -1)
+            lru_pop(&pg_replacement_buf, idx);
+        }
         #elif defined(PG_REPLACEMENT_USE_FIFO)
         // TODO
         if (pte != 0 && !(*pte & PTE_P)) {
