@@ -113,29 +113,30 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
 
   pte_t *pte = &pagetable[PX(0, va)];
 
+  if (va==0 || va==0x01000 || va==0x02000)
+    return pte;
+
   // NTU OS 2024
   // pte is accessed, so determine how
   // it affects the page replacement buffer here
   #ifdef PG_REPLACEMENT_USE_LRU
   // TODO
-  if (pte != (uint64) 0x0000000087f44010) {
-    int idx = lru_find(&pg_replacement_buf, (uint64) pte);
-    if(idx == -1) {
-      if(!lru_full(&pg_replacement_buf)) {
-        lru_push(&pg_replacement_buf, (uint64) pte);
-      } else {
-        for(int i = 0; i < PG_BUF_SIZE; i++) {
-          if(!(*(pte_t*) pg_replacement_buf.bucket[i] & PTE_P)) {
-            lru_pop(&pg_replacement_buf, i);
-            lru_push(&pg_replacement_buf, (uint64) pte);
-            break;
-          }
+  int idx = lru_find(&pg_replacement_buf, (uint64) pte);
+  if(idx == -1) {
+    if(!lru_full(&pg_replacement_buf)) {
+      lru_push(&pg_replacement_buf, (uint64) pte);
+    } else {
+      for(int i = 0; i < PG_BUF_SIZE; i++) {
+        if(!(*(pte_t*) pg_replacement_buf.bucket[i] & PTE_P)) {
+          lru_pop(&pg_replacement_buf, i);
+          lru_push(&pg_replacement_buf, (uint64) pte);
+          break;
         }
       }
-    } else {
-      lru_pop(&pg_replacement_buf, idx);
-      lru_push(&pg_replacement_buf, (uint64) pte);
     }
+  } else {
+    lru_pop(&pg_replacement_buf, idx);
+    lru_push(&pg_replacement_buf, (uint64) pte);
   }
   
   #elif defined(PG_REPLACEMENT_USE_FIFO)

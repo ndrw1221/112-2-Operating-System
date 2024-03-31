@@ -1,12 +1,14 @@
 make[1]: Entering directory '/root'
+fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
 riscv64-linux-gnu-gcc    -c -o kernel/entry.o kernel/entry.S
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/kalloc.o kernel/kalloc.c
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/string.o kernel/string.c
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/main.o kernel/main.c
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/vm.o kernel/vm.c
 kernel/vm.c: In function ‘madvise’:
-kernel/vm.c:623:1: warning: control reaches end of non-void function [-Wreturn-type]
-  623 | }
+kernel/vm.c:624:1: warning: control reaches end of non-void function [-Wreturn-type]
+  624 | }
       | ^
 riscv64-linux-gnu-gcc -Wall  -O -fno-omit-frame-pointer -ggdb -DSOL_PGTBL -DLAB_PGTBL -MD -mcmodel=medany -ffreestanding -fno-common -nostdlib -mno-relax -I. -fno-stack-protector -fno-pie -no-pie  -c -o kernel/proc.o kernel/proc.c
 riscv64-linux-gnu-gcc    -c -o kernel/swtch.o kernel/swtch.S
@@ -41,13 +43,33 @@ riscv64-linux-gnu-objdump -S kernel/kernel > kernel/kernel.asm
 riscv64-linux-gnu-objdump -t kernel/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$/d' > kernel/kernel.sym
 make[1]: Leaving directory '/root'
 == Test mp2_1 (6%) ==
-mp2_1: OK (10.6s) 
+fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+mp2_1: OK (24.0s) 
 == Test mp2_2 (12%) ==
-mp2_2: OK (2.0s) 
+mp2_2: OK (27.6s) 
 == Test mp2_3 (12%) ==
-mp2_3: OK (2.3s) 
+mp2_3: OK (24.6s) 
 == Test mp2_4 (12%) ==
-mp2_4: OK (24.7s) 
+mp2_4: OK (27.5s) 
 == Test mp2_5 (18%) ==
-mp2_5: OK (23.5s) 
-Score: 60/60
+mp2_5: OK (29.7s) 
+== Test custom_1 (4%) ==
+custom_1: OK (94.9s) 
+== Test custom_2 (8%) ==
+Timeout! custom_2: FAIL (324.1s) 
+    Line 588 do not match.
+    QEMU output saved to custom_2.out.
+== Test custom_3 (8%) ==
+Timeout! custom_3: FAIL (325.4s) 
+    Line 506 do not match.
+    QEMU output saved to custom_3.out.
+== Test custom_4 (8%) ==
+custom_4: FAIL (24.1s) 
+    Line 387 do not match.
+    QEMU output saved to custom_4.out.
+== Test custom_5 (12%) ==
+custom_5: FAIL (24.8s) 
+    Line 511 do not match.
+    QEMU output saved to custom_5.out.
+Score: 64/100
