@@ -25,16 +25,7 @@ char *swap_page_from_pte(pte_t *pte) {
 /* Page fault handler */
 int handle_pgfault(uint64 va) {
   /* TODO */
-  pagetable_t pgtbl = myproc()->pagetable;
-  char *mem = kalloc();
-  if(mem == 0) {
-    panic("out of memory");
-  }
-  int result = mappages(pgtbl, va, PGSIZE, (uint64)mem, PTE_W | PTE_X | PTE_R | PTE_U);
-
-  if (result < 0) {
-    kfree(mem);
-    panic("mappages failed");
-  }
+  va = PGROUNDDOWN(va);
+  madvise(va, PGSIZE, 1);
   return 0;
 }

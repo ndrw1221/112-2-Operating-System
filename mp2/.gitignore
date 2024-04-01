@@ -6,6 +6,7 @@
 *.log
 *.ind
 *.ilg
+*.out
 
 # Object files, dependency files, assembler output, symbol files
 */*.o

@@ -458,7 +458,7 @@ myapi.key:
 		false; \
 	fi;
 
-STUDENT_ID="PLEASE_SPECIFY_STUDENT_ID"
+STUDENT_ID="r12631026"
 
 zip:
 	$(MAKE) clean

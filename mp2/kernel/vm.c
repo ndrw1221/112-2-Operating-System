@@ -141,22 +141,21 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
   
   #elif defined(PG_REPLACEMENT_USE_FIFO)
   // TODO
-  if (alloc) {
-    if (q_find(&pg_replacement_buf, (uint64) pte) == -1) {
-      if (!q_full(&pg_replacement_buf)) {
-        q_push(&pg_replacement_buf, (uint64) pte);
-      } else {
-        for (int i = 0; i < PG_BUF_SIZE; i++) {
-          // first pte that is not pinned
-          if (!(*(pte_t*) pg_replacement_buf.bucket[i] & PTE_P)) {
-            q_pop_idx(&pg_replacement_buf, i);
-            q_push(&pg_replacement_buf, (uint64) pte);
-            break;
-          }
+  if (q_find(&pg_replacement_buf, (uint64) pte) == -1) {
+    if (!q_full(&pg_replacement_buf)) {
+      q_push(&pg_replacement_buf, (uint64) pte);
+    } else {
+      for (int i = 0; i < PG_BUF_SIZE; i++) {
+        // first pte that is not pinned
+        if (!(*(pte_t*) pg_replacement_buf.bucket[i] & PTE_P)) {
+          q_pop_idx(&pg_replacement_buf, i);
+          q_push(&pg_replacement_buf, (uint64) pte);
+          break;
         }
       }
     }
   }
+  
   #endif
   return pte;
 }
@@ -530,25 +529,21 @@ int madvise(uint64 base, uint64 len, int advice) {
   } else if (advice == MADV_WILLNEED) {
     // TODO
     begin_op();
-
-    pte_t *pte;
+    // pte_t *pte;
     for (uint64 va = begin; va <= last; va += PGSIZE) {
-      pte = walk(pgtbl, va, 0);
-      if (pte != 0 && (*pte & PTE_S)) {
+      pte_t *pte = walk(pgtbl, va, 0);
+      if (pte != 0 && !(*pte & PTE_V)) {
         uint dp = PTE2BLOCKNO(*pte);
-        handle_pgfault(va);
-        char *pa = (char*) PTE2PA(*pte);
-        // printf("pte=%p va=%p blockno=%p pa=%p\n", pte, va, dp, pa);
-        read_page_from_disk(ROOTDEV, pa, dp);
-        *pte = (PA2PTE(pa) | PTE_FLAGS(*pte) | PTE_V) & ~PTE_S;
-        if (dp == 0) {
-          end_op();
-          return -1;
+        char *mem = kalloc();
+        if(mem == 0) {
+          panic("out of memory");
         }
+        memset(mem, 0, PGSIZE);
+        read_page_from_disk(ROOTDEV, mem, dp);
+        mappages(pgtbl, va, PGSIZE, (uint64)mem, PTE_FLAGS(*pte) & ~PTE_S);
         bfree_page(ROOTDEV, dp);
       }
     }
-
     end_op();
     return 0;
   } else if (advice == MADV_DONTNEED) {
