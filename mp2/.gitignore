@@ -1,0 +1,27 @@
+# TeX files
+*.tex
+*.dvi
+*.idx
+*.aux
+*.log
+*.ind
+*.ilg
+
+# Object files, dependency files, assembler output, symbol files
+*/*.o
+*/*.d
+*/*.asm
+*/*.sym
+
+# Specific files and directories
+$U/initcode
+$U/initcode.out
+$K/kernel
+fs.img
+mkfs/mkfs
+.gdbinit
+$U/usys.S
+$(UPROGS)
+ph
+barrier
+.bash_history
