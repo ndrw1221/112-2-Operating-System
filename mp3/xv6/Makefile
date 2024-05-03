@@ -248,7 +248,7 @@ grade:
           (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
 	@python3 grade-mp3.py
 
-STUDENT_ID="PLEASE_SPECIFY_STUDENT_ID"
+STUDENT_ID="r12631026"
 
 zip:
 	$(MAKE) clean
