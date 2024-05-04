@@ -39,11 +39,11 @@ struct threads_sched_result schedule_wrr(struct threads_sched_args args)
 {
     struct thread *current_thread = NULL;
     struct thread *th = NULL;
-    printf("\nrun_queue: \n");
+    // printf("\nrun_queue: \n");
     list_for_each_entry(th, args.run_queue, thread_list)
     {
-        printf("th->ID: %d; ", th->ID);
-        printf("th->arrival_time: %d\n", th->current_deadline - th->deadline);
+        // printf("th->ID: %d; ", th->ID);
+        // printf("th->arrival_time: %d\n", th->current_deadline - th->deadline);
         if (current_thread == NULL)
             current_thread = th;
     }
