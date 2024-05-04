@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 {
     struct thread *t1 = thread_create(f, NULL, 0, 5, -1, 1);
     thread_set_weight(t1, 1);
-    // thread_add_at(t1, 2);
+    thread_add_at(t1, 2);
 
     struct thread *t2 = thread_create(f, NULL, 0, 7, -1, 1);
     thread_set_weight(t2, 2);
@@ -27,7 +27,6 @@ int main(int argc, char **argv)
     struct thread *t3 = thread_create(f, NULL, 0, 5, -1, 1);
     thread_set_weight(t3, 1);
     thread_add_at(t3, 1);
-    thread_add_at(t1, 1);
 
     thread_start_threading();
     printf("\nexited\n");
