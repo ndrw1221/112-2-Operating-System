@@ -4,7 +4,8 @@
 #include "user/list.h"
 #include "kernel/types.h"
 
-struct thread {
+struct thread
+{
     void (*fp)(void *arg);
     void *arg;
     void *stack;
@@ -36,7 +37,8 @@ struct thread {
     int current_deadline;
 };
 
-struct release_queue_entry {
+struct release_queue_entry
+{
     struct thread *thrd;
     // for linked list
     struct list_head thread_list;

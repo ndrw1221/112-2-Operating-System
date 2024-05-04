@@ -3,7 +3,8 @@
 
 #include "user/list.h"
 
-struct threads_sched_args {
+struct threads_sched_args
+{
     // the number of ticks since threading starts
     int current_time;
     // the time quantum for each thread (for round-robin scheduling)
@@ -14,7 +15,8 @@ struct threads_sched_args {
     struct list_head *release_queue;
 };
 
-struct threads_sched_result {
+struct threads_sched_result
+{
     // `scheduled_thread_list_member` should point to the `thread_list` member of
     // the scheduled `struct thread` entry
     struct list_head *scheduled_thread_list_member;

@@ -55,7 +55,8 @@ void thread_add_at(struct thread *t, int arrival_time)
     struct release_queue_entry *new_entry = (struct release_queue_entry *)malloc(sizeof(struct release_queue_entry));
     new_entry->thrd = t;
     new_entry->release_time = arrival_time;
-    if (t->is_real_time) {
+    if (t->is_real_time)
+    {
         t->current_deadline = arrival_time;
         t->current_deadline = arrival_time + t->deadline;
     }
@@ -65,8 +66,10 @@ void thread_add_at(struct thread *t, int arrival_time)
 void __release()
 {
     struct release_queue_entry *cur, *nxt;
-    list_for_each_entry_safe(cur, nxt, &release_queue, thread_list) {
-        if (threading_system_time >= cur->release_time) {
+    list_for_each_entry_safe(cur, nxt, &release_queue, thread_list)
+    {
+        if (threading_system_time >= cur->release_time)
+        {
             cur->thrd->remaining_time = cur->thrd->processing_time;
             cur->thrd->current_deadline = cur->release_time + cur->thrd->deadline;
             list_add_tail(&cur->thrd->thread_list, &run_queue);
@@ -91,7 +94,8 @@ void __thread_exit(struct thread *to_remove)
 
 void thread_exit(void)
 {
-    if (current == &run_queue) {
+    if (current == &run_queue)
+    {
         fprintf(2, "[FATAL] thread_exit is called on a nonexistent thread\n");
         exit(1);
     }
@@ -112,12 +116,15 @@ void __finish_current()
     printf("thread#%d finish at %d\n",
            current_thread->ID, threading_system_time, current_thread->n);
 
-    if (current_thread->n > 0) {
+    if (current_thread->n > 0)
+    {
         struct list_head *to_remove = current;
         current = current->prev;
         list_del(to_remove);
         thread_add_at(current_thread, current_thread->current_deadline);
-    } else {
+    }
+    else
+    {
         __thread_exit(current_thread);
     }
 }
@@ -129,12 +136,15 @@ void __rt_finish_current()
     printf("thread#%d finish one cycle at %d: %d cycles left\n",
            current_thread->ID, threading_system_time, current_thread->n);
 
-    if (current_thread->n > 0) {
+    if (current_thread->n > 0)
+    {
         struct list_head *to_remove = current;
         current = current->prev;
         list_del(to_remove);
         thread_add_at(current_thread, current_thread->current_deadline);
-    } else {
+    }
+    else
+    {
         __thread_exit(current_thread);
     }
 }
@@ -145,22 +155,26 @@ void switch_handler(void *arg)
     struct thread *current_thread = list_entry(current, struct thread, thread_list);
 
     threading_system_time += elapsed_time;
-     __release();
+    __release();
     current_thread->remaining_time -= elapsed_time;
 
     if (current_thread->is_real_time)
-        if (threading_system_time > current_thread->current_deadline || 
-            (threading_system_time == current_thread->current_deadline && current_thread->remaining_time > 0)) {
+        if (threading_system_time > current_thread->current_deadline ||
+            (threading_system_time == current_thread->current_deadline && current_thread->remaining_time > 0))
+        {
             printf("thread#%d misses a deadline at %d\n", current_thread->ID, threading_system_time);
             exit(0);
         }
 
-    if (current_thread->remaining_time <= 0) {
+    if (current_thread->remaining_time <= 0)
+    {
         if (current_thread->is_real_time)
             __rt_finish_current();
         else
             __finish_current();
-    } else {
+    }
+    else
+    {
         // move the current thread to the end of the run_queue
         struct list_head *to_remove = current;
         current = current->prev;
@@ -176,32 +190,39 @@ void switch_handler(void *arg)
 
 void __dispatch()
 {
-    if (current == &run_queue) {
+    if (current == &run_queue)
+    {
         return;
     }
 
-    if (allocated_time < 0) {
+    if (allocated_time < 0)
+    {
         fprintf(2, "[FATAL] allocated_time is negative\n");
         exit(1);
     }
 
     struct thread *current_thread = list_entry(current, struct thread, thread_list);
-    if (current_thread->is_real_time && allocated_time == 0) { // miss deadline, abort
+    if (current_thread->is_real_time && allocated_time == 0)
+    { // miss deadline, abort
         printf("thread#%d misses a deadline at %d\n", current_thread->ID, current_thread->current_deadline);
         exit(0);
     }
 
     printf("dispatch thread#%d at %d: allocated_time=%d\n", current_thread->ID, threading_system_time, allocated_time);
 
-    if (current_thread->buf_set) {
+    if (current_thread->buf_set)
+    {
         thrdstop(allocated_time, &(current_thread->thrdstop_context_id), switch_handler, (void *)allocated_time);
         thrdresume(current_thread->thrdstop_context_id);
-    } else {
+    }
+    else
+    {
         current_thread->buf_set = 1;
         unsigned long new_stack_p = (unsigned long)current_thread->stack_p;
         current_thread->thrdstop_context_id = -1;
         thrdstop(allocated_time, &(current_thread->thrdstop_context_id), switch_handler, (void *)allocated_time);
-        if (current_thread->thrdstop_context_id < 0) {
+        if (current_thread->thrdstop_context_id < 0)
+        {
             fprintf(2, "[ERROR] number of threads may exceed MAX_THRD_NUM\n");
             exit(1);
         }
@@ -266,13 +287,15 @@ void thread_start_threading()
     thrdstop(1000, &main_thrd_id, back_to_main_handler, (void *)0);
     cancelthrdstop(main_thrd_id, 0);
 
-    while (!list_empty(&run_queue) || !list_empty(&release_queue)) {
+    while (!list_empty(&run_queue) || !list_empty(&release_queue))
+    {
         __release();
         __schedule();
         cancelthrdstop(main_thrd_id, 0);
         __dispatch();
 
-        if (list_empty(&run_queue) && list_empty(&release_queue)) {
+        if (list_empty(&run_queue) && list_empty(&release_queue))
+        {
             break;
         }
 
@@ -280,7 +303,8 @@ void thread_start_threading()
         printf("run_queue is empty, sleep for %d ticks\n", allocated_time);
         sleeping = 1;
         thrdstop(allocated_time, &main_thrd_id, back_to_main_handler, (void *)allocated_time);
-        while (sleeping) {
+        while (sleeping)
+        {
             // zzz...
         }
     }
