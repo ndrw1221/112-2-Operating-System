@@ -44,7 +44,7 @@ struct threads_sched_result schedule_wrr(struct threads_sched_args args)
     {
         // printf("th->ID: %d; ", th->ID);
         // printf("th->arrival_time: %d\n", th->current_deadline - th->deadline);
-        if (current_thread == NULL)
+        if (current_thread == NULL || (th->remaining_time == th->processing_time && th->ID < current_thread->ID))
             current_thread = th;
     }
 
