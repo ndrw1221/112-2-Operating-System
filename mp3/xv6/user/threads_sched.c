@@ -67,13 +67,65 @@ struct threads_sched_result schedule_wrr(struct threads_sched_args args)
 }
 
 /* Shortest-Job-First Scheduling */
-// struct threads_sched_result schedule_sjf(struct threads_sched_args args)
-// {
-//     struct threads_sched_result r;
-//     // TODO: implement the shortest-job-first scheduling algorithm
+struct threads_sched_result schedule_sjf(struct threads_sched_args args)
+{
+    struct thread *shortest_job = NULL;
+    struct thread *th = NULL;
+    struct release_queue_entry *rqe = NULL;
+    int smallest_release_time = 0;
+    int allocated_time = 0;
 
-//     return r;
-// }
+    // printf("\n>> run_queue: \n");
+    list_for_each_entry(th, args.run_queue, thread_list)
+    {
+        // printf("th->ID: %d; ", th->ID);
+        // printf("th->arrival_time: %d; ", th->current_deadline - th->deadline);
+        // printf("th->remaining_time: %d; ", th->remaining_time);
+        // printf("th->finish time: %d\n", args.current_time + th->remaining_time);
+
+        // Find the shortest job in the run queue
+        if (shortest_job == NULL || th->remaining_time < shortest_job->remaining_time)
+            shortest_job = th;
+        else if (th->remaining_time == shortest_job->remaining_time && th->ID < shortest_job->ID)
+            shortest_job = th;
+    }
+    allocated_time = shortest_job->remaining_time;
+
+    // printf("\n>> release_queue: \n");
+    list_for_each_entry(rqe, args.release_queue, thread_list)
+    {
+        // printf("rqe->thrd->ID: %d; ", rqe->thrd->ID);
+        // printf("rqe->release_time: %d; ", rqe->release_time);
+        // printf("rqe->thrd->processing_time: %d\n", rqe->thrd->processing_time);
+
+        // If any job in the release queue has a shorter processing time than the shortest job
+        // and the job is released before the shortest job finishes
+        if (rqe->thrd->processing_time < shortest_job->remaining_time &&            // shorter job
+            rqe->release_time < (args.current_time + shortest_job->remaining_time)) // released before the shortest job finishes
+        {
+            if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
+            {
+                smallest_release_time = rqe->release_time;
+                allocated_time = smallest_release_time - args.current_time;
+            }
+        }
+    }
+
+    struct threads_sched_result r;
+    // TODO: implement the shortest-job-first scheduling algorithm
+    if (shortest_job != NULL)
+    {
+        r.scheduled_thread_list_member = &shortest_job->thread_list;
+        r.allocated_time = allocated_time;
+    }
+    else
+    {
+        r.scheduled_thread_list_member = args.run_queue;
+        r.allocated_time = 1;
+    }
+
+    return r;
+}
 
 // /* MP3 Part 2 - Real-Time Scheduling*/
 // /* Least-Slack-Time Scheduling */
