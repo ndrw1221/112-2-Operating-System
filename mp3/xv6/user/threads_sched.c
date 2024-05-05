@@ -159,8 +159,6 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
     int allocated_time = 0;
     int smallest_release_time = 0;
 #define slack_time(th) (th->current_deadline - args.current_time - th->remaining_time)
-#define slack_time_at(th, t) (th->current_deadline - t - th->remaining_time)
-
     // printf("\n>> run_queue: \n");
     list_for_each_entry(th, args.run_queue, thread_list)
     {
@@ -181,7 +179,7 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
         // printf("rqe->release_time: %d; ", rqe->release_time);
         // printf("rqe->thrd->processing_time: %d\n", rqe->thrd->processing_time);
         if (rqe->release_time < args.current_time + least_slack_time_thread->remaining_time &&
-            slack_time_at(rqe->thrd, rqe->release_time) < slack_time(least_slack_time_thread))
+            (rqe->thrd->deadline - rqe->thrd->processing_time) < slack_time(least_slack_time_thread))
         {
             if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
             {
@@ -190,7 +188,7 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
             }
         }
         else if (rqe->release_time < args.current_time + least_slack_time_thread->remaining_time &&
-                 slack_time_at(rqe->thrd, rqe->release_time) == slack_time(least_slack_time_thread) &&
+                 (rqe->thrd->deadline - rqe->thrd->processing_time) == slack_time(least_slack_time_thread) &&
                  rqe->thrd->ID < least_slack_time_thread->ID)
         {
             if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
