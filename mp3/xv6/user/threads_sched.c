@@ -199,6 +199,10 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
         }
     }
 
+    // Handle miss deadline
+    if (args.current_time + allocated_time > least_slack_time_thread->current_deadline)
+        allocated_time = least_slack_time_thread->current_deadline - args.current_time;
+
     struct threads_sched_result r;
     // TODO: implement the least-slack-time scheduling algorithm
     if (least_slack_time_thread != NULL)
