@@ -95,9 +95,9 @@ struct threads_sched_result schedule_sjf(struct threads_sched_args args)
         // printf("th->finish time: %d\n", args.current_time + th->remaining_time);
 
         // Find the shortest job in the run queue
-        if (shortest_job == NULL || th->remaining_time < shortest_job->remaining_time)
-            shortest_job = th;
-        else if (th->remaining_time == shortest_job->remaining_time && th->ID < shortest_job->ID)
+        if (shortest_job == NULL ||
+            th->remaining_time < shortest_job->remaining_time ||
+            (th->remaining_time == shortest_job->remaining_time && th->ID < shortest_job->ID))
             shortest_job = th;
     }
     allocated_time = shortest_job->remaining_time;
@@ -154,54 +154,58 @@ struct threads_sched_result schedule_sjf(struct threads_sched_args args)
 struct threads_sched_result schedule_lst(struct threads_sched_args args)
 {
     struct thread *least_slack_time_thread = NULL;
+    struct thread *miss_deadline_thread = NULL;
     struct thread *th = NULL;
     struct release_queue_entry *rqe = NULL;
     int allocated_time = 0;
     int smallest_release_time = 0;
 #define slack_time(th) (th->current_deadline - args.current_time - th->remaining_time)
+#define release_queue_slack_time(th) (th->deadline - th->processing_time)
     // printf("\n>> run_queue: \n");
     list_for_each_entry(th, args.run_queue, thread_list)
     {
         // printf("th->ID: %d; ", th->ID);
         // printf("th->slack_time: %d\n", slack_time(th));
+        if (args.current_time > th->current_deadline &&
+            (miss_deadline_thread == NULL || th->ID < miss_deadline_thread->ID))
+        {
+            miss_deadline_thread = th;
+        }
 
-        if (least_slack_time_thread == NULL || slack_time(th) < slack_time(least_slack_time_thread))
+        if (miss_deadline_thread == NULL && (least_slack_time_thread == NULL ||
+                                             slack_time(th) < slack_time(least_slack_time_thread) ||
+                                             (slack_time(th) == slack_time(least_slack_time_thread) && th->ID < least_slack_time_thread->ID)))
+        {
             least_slack_time_thread = th;
-        else if (slack_time(th) == slack_time(least_slack_time_thread) && th->ID < least_slack_time_thread->ID)
-            least_slack_time_thread = th;
+        }
     }
-    allocated_time = least_slack_time_thread->remaining_time;
 
-    // printf("\n>> release_queue: \n");
-    list_for_each_entry(rqe, args.release_queue, thread_list)
+    if (miss_deadline_thread != NULL)
     {
-        // printf("rqe->thrd->ID: %d; ", rqe->thrd->ID);
-        // printf("rqe->release_time: %d; ", rqe->release_time);
-        // printf("rqe->thrd->processing_time: %d\n", rqe->thrd->processing_time);
-        if (rqe->release_time < args.current_time + least_slack_time_thread->remaining_time &&
-            (rqe->thrd->deadline - rqe->thrd->processing_time) < slack_time(least_slack_time_thread))
+        least_slack_time_thread = miss_deadline_thread;
+        allocated_time = 0;
+    }
+    else
+    {
+        allocated_time = min(least_slack_time_thread->remaining_time, least_slack_time_thread->current_deadline - args.current_time);
+        // printf("\n>> release_queue: \n");
+        list_for_each_entry(rqe, args.release_queue, thread_list)
         {
-            if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
+            // printf("rqe->thrd->ID: %d; ", rqe->thrd->ID);
+            // printf("rqe->release_time: %d; ", rqe->release_time);
+            // printf("rqe->thrd->processing_time: %d\n", rqe->thrd->processing_time);
+            if (rqe->release_time < args.current_time + allocated_time &&
+                (release_queue_slack_time(rqe->thrd) < slack_time(least_slack_time_thread) ||
+                 (release_queue_slack_time(rqe->thrd) == slack_time(least_slack_time_thread) && rqe->thrd->ID < least_slack_time_thread->ID)))
             {
-                smallest_release_time = rqe->release_time;
-                allocated_time = smallest_release_time - args.current_time;
-            }
-        }
-        else if (rqe->release_time < args.current_time + least_slack_time_thread->remaining_time &&
-                 (rqe->thrd->deadline - rqe->thrd->processing_time) == slack_time(least_slack_time_thread) &&
-                 rqe->thrd->ID < least_slack_time_thread->ID)
-        {
-            if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
-            {
-                smallest_release_time = rqe->release_time;
-                allocated_time = smallest_release_time - args.current_time;
+                if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
+                {
+                    smallest_release_time = rqe->release_time;
+                    allocated_time = smallest_release_time - args.current_time;
+                }
             }
         }
     }
-
-    // Handle miss deadline
-    if (args.current_time + allocated_time > least_slack_time_thread->current_deadline)
-        allocated_time = least_slack_time_thread->current_deadline - args.current_time;
 
     struct threads_sched_result r;
     // TODO: implement the least-slack-time scheduling algorithm
@@ -212,6 +216,8 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
     }
     else
     {
+        r.scheduled_thread_list_member = args.run_queue;
+
         struct release_queue_entry *next_rqe = NULL;
         struct release_queue_entry *rqe = NULL;
         list_for_each_entry(rqe, args.release_queue, thread_list)
@@ -219,8 +225,6 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
             if (rqe == NULL || rqe->release_time < next_rqe->release_time)
                 next_rqe = rqe;
         }
-
-        r.scheduled_thread_list_member = args.run_queue;
         if (next_rqe != NULL)
             r.allocated_time = next_rqe->release_time - args.current_time;
         else
@@ -230,11 +234,79 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
     return r;
 }
 
-// /* Deadline-Monotonic Scheduling */
-// struct threads_sched_result schedule_dm(struct threads_sched_args args)
-// {
-//     struct threads_sched_result r;
-//     // TODO: implement the deadline-monotonic scheduling algorithm
+/* Deadline-Monotonic Scheduling */
+struct threads_sched_result schedule_dm(struct threads_sched_args args)
+{
+    struct thread *shortest_deadline_thread = NULL;
+    struct thread *miss_deadline_thread = NULL;
+    struct thread *th = NULL;
+    struct release_queue_entry *rqe = NULL;
+    int allocated_time = 0;
+    int smallest_release_time = 0;
 
-//     return r;
-// }
+    list_for_each_entry(th, args.run_queue, thread_list)
+    {
+        if (args.current_time > th->current_deadline &&
+            (miss_deadline_thread == NULL || th->ID < miss_deadline_thread->ID))
+        {
+            miss_deadline_thread = th;
+        }
+
+        if (miss_deadline_thread == NULL && (shortest_deadline_thread == NULL ||
+                                             th->deadline < shortest_deadline_thread->deadline ||
+                                             (th->deadline == shortest_deadline_thread->deadline && th->ID < shortest_deadline_thread->ID)))
+        {
+            shortest_deadline_thread = th;
+        }
+    }
+
+    if (miss_deadline_thread != NULL)
+    {
+        shortest_deadline_thread = miss_deadline_thread;
+        allocated_time = 0;
+    }
+    else
+    {
+        allocated_time = min(shortest_deadline_thread->remaining_time, shortest_deadline_thread->current_deadline - args.current_time);
+        list_for_each_entry(rqe, args.release_queue, thread_list)
+        {
+            if (rqe->release_time < args.current_time + allocated_time &&
+                (rqe->thrd->deadline < shortest_deadline_thread->deadline ||
+                 (rqe->thrd->deadline == shortest_deadline_thread->deadline && rqe->thrd->ID < shortest_deadline_thread->ID)))
+            {
+                if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
+                {
+                    smallest_release_time = rqe->release_time;
+                    allocated_time = smallest_release_time - args.current_time;
+                }
+            }
+        }
+    }
+
+    struct threads_sched_result r;
+    // TODO: implement the deadline-monotonic scheduling algorithm
+    if (shortest_deadline_thread != NULL)
+    {
+        r.scheduled_thread_list_member = &shortest_deadline_thread->thread_list;
+        r.allocated_time = allocated_time;
+    }
+    else
+    {
+        r.scheduled_thread_list_member = args.run_queue;
+
+        // Handle sleep time
+        struct release_queue_entry *next_rqe = NULL;
+        struct release_queue_entry *rqe = NULL;
+        list_for_each_entry(rqe, args.release_queue, thread_list)
+        {
+            if (rqe == NULL || rqe->release_time < next_rqe->release_time)
+                next_rqe = rqe;
+        }
+        if (next_rqe != NULL)
+            r.allocated_time = next_rqe->release_time - args.current_time;
+        else
+            r.allocated_time = 1;
+    }
+
+    return r;
+}
