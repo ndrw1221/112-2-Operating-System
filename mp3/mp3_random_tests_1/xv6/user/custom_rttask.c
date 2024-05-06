@@ -7,12 +7,9 @@
               while (1) k++;
           }
           int main(int argc, char **argv){
-          struct thread *t1 = thread_create(f, NULL, 1, 9, 54, 10);
+          struct thread *t1 = thread_create(f, NULL, 1, 13, 44, 1);
 thread_set_weight(t1, 1);
-thread_add_at(t1, 64);
-struct thread *t2 = thread_create(f, NULL, 1, 3, 5, 8);
-thread_set_weight(t2, 1);
-thread_add_at(t2, 74);
+thread_add_at(t1, 62);
 thread_start_threading();
           printf("\nexited\n");
           exit(0);

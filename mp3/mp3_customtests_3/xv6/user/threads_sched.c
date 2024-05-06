@@ -113,10 +113,13 @@ struct threads_sched_result schedule_sjf(struct threads_sched_args args)
 
         // If any job in the release queue has a shorter processing time than the shortest job
         // and the job is released before the shortest job finishes
-        if (rqe->thrd->processing_time < shortest_job->remaining_time &&            // shorter job
-            rqe->release_time < (args.current_time + shortest_job->remaining_time)) // released before the shortest job finishes
+        if (rqe->release_time < (args.current_time + allocated_time) &&
+            (rqe->thrd->processing_time < (shortest_job->remaining_time - (rqe->release_time - args.current_time)) ||
+             (rqe->thrd->processing_time == (shortest_job->remaining_time - (rqe->release_time - args.current_time)) && rqe->thrd->ID < shortest_job->ID)))
         {
-            if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
+            if (smallest_release_time == 0 ||
+                rqe->release_time < smallest_release_time ||
+                (rqe->release_time == smallest_release_time && rqe->thrd->ID < shortest_job->ID))
             {
                 smallest_release_time = rqe->release_time;
                 allocated_time = smallest_release_time - args.current_time;
@@ -137,7 +140,9 @@ struct threads_sched_result schedule_sjf(struct threads_sched_args args)
         struct release_queue_entry *rqe = NULL;
         list_for_each_entry(rqe, args.release_queue, thread_list)
         {
-            if (rqe == NULL || rqe->release_time < next_rqe->release_time)
+            if (rqe == NULL ||
+                rqe->release_time < next_rqe->release_time ||
+                (rqe->release_time == next_rqe->release_time && rqe->thrd->ID < next_rqe->thrd->ID))
                 next_rqe = rqe;
         }
 
@@ -200,7 +205,9 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
                 (release_queue_slack_time(rqe->thrd) < slack_time(least_slack_time_thread) ||
                  (release_queue_slack_time(rqe->thrd) == slack_time(least_slack_time_thread) && rqe->thrd->ID < least_slack_time_thread->ID)))
             {
-                if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
+                if (smallest_release_time == 0 ||
+                    rqe->release_time < smallest_release_time ||
+                    (rqe->release_time == smallest_release_time && rqe->thrd->ID < least_slack_time_thread->ID))
                 {
                     smallest_release_time = rqe->release_time;
                     allocated_time = smallest_release_time - args.current_time;
@@ -224,7 +231,9 @@ struct threads_sched_result schedule_lst(struct threads_sched_args args)
         struct release_queue_entry *rqe = NULL;
         list_for_each_entry(rqe, args.release_queue, thread_list)
         {
-            if (rqe == NULL || rqe->release_time < next_rqe->release_time)
+            if (rqe == NULL ||
+                rqe->release_time < next_rqe->release_time ||
+                (rqe->release_time == next_rqe->release_time && rqe->thrd->ID < next_rqe->thrd->ID))
                 next_rqe = rqe;
         }
         if (next_rqe != NULL)
@@ -276,7 +285,9 @@ struct threads_sched_result schedule_dm(struct threads_sched_args args)
                 (rqe->thrd->deadline < shortest_deadline_thread->deadline ||
                  (rqe->thrd->deadline == shortest_deadline_thread->deadline && rqe->thrd->ID < shortest_deadline_thread->ID)))
             {
-                if (smallest_release_time == 0 || rqe->release_time < smallest_release_time)
+                if (smallest_release_time == 0 ||
+                    rqe->release_time < smallest_release_time ||
+                    (rqe->release_time == smallest_release_time && rqe->thrd->ID < shortest_deadline_thread->ID))
                 {
                     smallest_release_time = rqe->release_time;
                     allocated_time = smallest_release_time - args.current_time;
@@ -301,7 +312,9 @@ struct threads_sched_result schedule_dm(struct threads_sched_args args)
         struct release_queue_entry *rqe = NULL;
         list_for_each_entry(rqe, args.release_queue, thread_list)
         {
-            if (rqe == NULL || rqe->release_time < next_rqe->release_time)
+            if (rqe == NULL ||
+                rqe->release_time < next_rqe->release_time ||
+                (rqe->release_time == next_rqe->release_time && rqe->thrd->ID < next_rqe->thrd->ID))
                 next_rqe = rqe;
         }
         if (next_rqe != NULL)
