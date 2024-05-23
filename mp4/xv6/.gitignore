@@ -11,13 +11,14 @@
 */*.d
 */*.asm
 */*.sym
+*/_*
 
-$U/initcode
-$U/initcode.out
-$K/kernel
+user/initcode
+user/initcode.out
+kernel/kernel
 fs.img
 mkfs/mkfs
 .gdbinit
-$U/usys.S
+user/usys.S
 $(UPROGS)
 
