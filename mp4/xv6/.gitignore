@@ -6,6 +6,7 @@
 *.ind
 *.ilg
 *.out
+*.pyc
 
 */*.o
 */*.d
