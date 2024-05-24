@@ -623,29 +623,104 @@ bad:
   return -1;
 }
 
+// Helper function to recursively traverse the file system
+static int traverse_fs(struct inode *dp, char *target, char *buf, int bufsize, int *offset, char *current_path)
+{
+  struct dirent de;
+  struct inode *ip;
+  char path[MAXPATH];
+  int off;
+
+  for (off = 0; off < dp->size; off += sizeof(de))
+  {
+    if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+      panic("traverse_fs: readi");
+
+    if (de.inum == 0)
+      continue;
+
+    // Skip "." and ".." to avoid infinite loops
+    if (namecmp(de.name, ".") == 0 || namecmp(de.name, "..") == 0)
+      continue;
+
+    ip = iget(dp->dev, de.inum);
+    ilock(ip);
+
+    // Construct the absolute path for the current entry
+    safestrcpy(path, current_path, MAXPATH);
+    if (strlen(path) + 1 + strlen(de.name) + 1 <= MAXPATH)
+    {
+      if (strlen(path) > 1)
+        strcat(path, "/");
+      strcat(path, de.name);
+    }
+
+    if (ip->type == T_SYMLINK)
+    {
+      char symlink_target[MAXPATH];
+      int target_length = readi(ip, 0, (uint64)symlink_target, 0, MAXPATH);
+      if (target_length < 0 || target_length >= MAXPATH)
+      {
+        iunlockput(ip);
+        continue;
+      }
+      symlink_target[target_length] = '\0'; // Ensure null-terminated string
+
+      if (strncmp(symlink_target, target, MAXPATH) == 0)
+      {
+        int path_len = strlen(path);
+        if (*offset + path_len + 1 <= bufsize)
+        {
+          if (*offset > 0)
+          {
+            buf[*offset] = ' ';
+            *offset += 1;
+          }
+          safestrcpy(buf + *offset, path, bufsize - *offset);
+          *offset += path_len;
+        }
+      }
+    }
+    else if (ip->type == T_DIR)
+    {
+      traverse_fs(ip, target, buf, bufsize, offset, path);
+    }
+
+    iunlockput(ip);
+  }
+
+  return *offset;
+}
+
 uint64
 sys_revreadlink(void)
 {
-  // TODO: Find all symbolic links that point to 'target'
-  // char target[MAXPATH];
-  // uint64 bufaddr;
-  // int bufsize;
+  char target[MAXPATH], buf[MAXPATH];
+  uint64 bufaddr;
+  int bufsize;
 
-  // if(argstr(0, target, MAXPATH) < 0 || argaddr(1, &bufaddr) < 0 || argint(2, &bufsize) < 0)
-  //   return -1;
+  if (argstr(0, target, MAXPATH) < 0 || argaddr(1, &bufaddr) < 0 || argint(2, &bufsize) < 0)
+    return -1;
 
-  // char userbuf[bufsize];
-  // memset(userbuf, 0, sizeof(userbuf));
+  begin_op();
 
-  // implement the code
+  struct inode *root = namei("/");
+  if (root == 0)
+  {
+    end_op();
+    return -1;
+  }
+  ilock(root);
 
-  // Copy the result from kernel to user space, userbuf should store all symbolic links that point to 'target'
-  // if(copyout(myproc()->pagetable, bufaddr, userbuf, strlen(userbuf)) < 0)
-  //   return -1;
+  int offset = 0;
+  char initial_path[2] = "/";
+  traverse_fs(root, target, buf, bufsize, &offset, initial_path);
 
-  // Return the number of bytes written to user buffer
+  iunlockput(root);
+  end_op();
 
-  panic("sys_revreadlink is not implemented yet");
+  if (copyout(myproc()->pagetable, bufaddr, buf, offset) < 0)
+    return -1;
 
-  return -1;
+  return offset;
 }
