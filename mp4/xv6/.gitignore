@@ -7,6 +7,7 @@
 *.ilg
 *.out
 *.pyc
+*.zip
 
 */*.o
 */*.d
