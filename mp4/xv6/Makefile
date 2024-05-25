@@ -190,7 +190,7 @@ ifneq ($(V),@)
 GRADEFLAGS += -v
 endif
 
-STUDENT_ID="r12631026"
+STUDENT_ID="PLEASE_SPECIFY_STUDENT_ID"
 zip:
 	$(MAKE) clean
 	rm -rf $(STUDENT_ID) $(STUDENT_ID).zip
@@ -235,4 +235,22 @@ mp4_3:
 	@$(MAKE) clean > /dev/null || \
           (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
 	./grade-revreadlink 2>&1 | tee revreadlink.csv
+	@$(MAKE) clean > /dev/null
+
+mp4_1_private:
+	@$(MAKE) clean > /dev/null || \
+          (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
+	./grade-bigfile-private 2>&1 | tee bigfile-private.csv
+	@$(MAKE) clean > /dev/null
+
+mp4_2_private:
+	@$(MAKE) clean > /dev/null || \
+          (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
+	./grade-symlinkfile-private 2>&1 | tee symlinkfile-private.csv
+	@$(MAKE) clean > /dev/null
+
+mp4_3_private:
+	@$(MAKE) clean > /dev/null || \
+          (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
+	./grade-revreadlink-private 2>&1 | tee revreadlink-private.csv
 	@$(MAKE) clean > /dev/null

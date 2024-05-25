@@ -13,13 +13,20 @@ def test_revreadlink_private():
 
 @test(8, "Reverse readlink: private testcase 1 (8 points)", parent=test_revreadlink_private)
 def test_revreadlink_private1():
-    pattern = (
-    )
+    pattern = r'^\/test4'
     r.match(pattern)
 
 @test(8, "Reverse readlink: private testcase 2 (8 points)", parent=test_revreadlink_private)
 def test_revreadlink_private2():
     pattern = (
+        r'^('
+        r'\/testb \/testa\/test2 \/testa\/test1\/link|'
+        r'\/testb \/testa\/test1\/link \/testa\/test2|'
+        r'\/testa\/test2 \/testb \/testa\/test1\/link|'
+        r'\/testa\/test2 \/testa\/test1\/link \/testb|'
+        r'\/testa\/test1\/link \/testb \/testa\/test2|'
+        r'\/testa\/test1\/link \/testa\/test2 \/testb'
+        r')$'
     )
     r.match(pattern)
 
