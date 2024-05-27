@@ -190,7 +190,7 @@ ifneq ($(V),@)
 GRADEFLAGS += -v
 endif
 
-STUDENT_ID="PLEASE_SPECIFY_STUDENT_ID"
+STUDENT_ID="r12631026"
 zip:
 	$(MAKE) clean
 	rm -rf $(STUDENT_ID) $(STUDENT_ID).zip
