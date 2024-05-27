@@ -357,7 +357,7 @@ sys_open(void)
     if (depth >= max_symlink_depth)
     {
       // Too many levels of symbolic links
-      iunlockput(ip);
+      // iunlockput(ip);
       end_op();
       return -1;
     }
